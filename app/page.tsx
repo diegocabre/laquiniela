@@ -97,8 +97,8 @@ export default async function Home() {
               {/* Cabecera del mockup */}
               <div className="flex items-center justify-between border-b border-zinc-800/80 pb-4">
                 <div>
-                  <span className="text-[10px] uppercase tracking-wider text-emerald-400 font-bold">Fase Reciente</span>
-                  <h3 className="font-extrabold text-white text-lg">Eliminatoria de 32</h3>
+                  <span className="text-[10px] uppercase tracking-wider text-emerald-400 font-bold">Fase en Juego</span>
+                  <h3 className="font-extrabold text-white text-lg">Octavos de Final</h3>
                 </div>
                 <span className="text-xs bg-emerald-950 text-emerald-400 px-3 py-1 rounded-full border border-emerald-900 font-bold">
                   Pozo: {formattedPool}
@@ -109,33 +109,33 @@ export default async function Home() {
               <div className="space-y-4">
                 <div className="bg-zinc-950/60 rounded-xl p-4 border border-zinc-900/50 flex flex-col gap-1.5 hover:border-zinc-800 transition">
                   <div className="flex items-center justify-between text-[10px] text-zinc-500 font-bold">
-                    <span>ELIMINATORIA DE 32</span>
-                    <span className="text-orange-400 font-bold">T. Extra</span>
+                    <span>OCTAVOS DE FINAL</span>
+                    <span className="text-zinc-400">Fin</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-sm">Argentina</span>
+                    <span className="font-bold text-sm">Canadá</span>
                     <div className="flex items-center gap-2">
-                      <span className="w-8 h-8 flex items-center justify-center font-black bg-zinc-900 text-white rounded-lg border border-zinc-800">3</span>
+                      <span className="w-8 h-8 flex items-center justify-center font-black bg-zinc-900 text-zinc-500 rounded-lg border border-zinc-800">0</span>
                       <span className="text-zinc-650 font-bold">:</span>
-                      <span className="w-8 h-8 flex items-center justify-center font-black bg-zinc-900 text-white rounded-lg border border-zinc-800">2</span>
+                      <span className="w-8 h-8 flex items-center justify-center font-black bg-zinc-900 text-white rounded-lg border border-zinc-800">3</span>
                     </div>
-                    <span className="font-bold text-sm text-right">Cabo Verde</span>
+                    <span className="font-bold text-sm text-right">Marruecos</span>
                   </div>
                 </div>
                 
                 <div className="bg-zinc-950/60 rounded-xl p-4 border border-zinc-900/50 flex flex-col gap-1.5 opacity-90 hover:border-zinc-800 transition">
                   <div className="flex items-center justify-between text-[10px] text-zinc-500 font-bold">
-                    <span>ELIMINATORIA DE 32</span>
-                    <span className="text-zinc-400">Fin</span>
+                    <span>OCTAVOS DE FINAL</span>
+                    <span className="text-emerald-400 font-bold animate-pulse">Hoy, 5:00 p.m.</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-sm">Colombia</span>
+                    <span className="font-bold text-sm">Paraguay</span>
                     <div className="flex items-center gap-2">
-                      <span className="w-8 h-8 flex items-center justify-center font-black bg-zinc-900 text-white rounded-lg border border-zinc-850">1</span>
+                      <span className="w-8 h-8 flex items-center justify-center font-black bg-zinc-900 text-zinc-500 rounded-lg border border-zinc-850">-</span>
                       <span className="text-zinc-650 font-bold">:</span>
-                      <span className="w-8 h-8 flex items-center justify-center font-black bg-zinc-900 text-white rounded-lg border border-zinc-850">0</span>
+                      <span className="w-8 h-8 flex items-center justify-center font-black bg-zinc-900 text-zinc-500 rounded-lg border border-zinc-850">-</span>
                     </div>
-                    <span className="font-bold text-sm text-right">Ghana</span>
+                    <span className="font-bold text-sm text-right">Francia</span>
                   </div>
                 </div>
               </div>
@@ -156,14 +156,14 @@ export default async function Home() {
           </div>
         </div>
 
-        {/* Fila Inferior: Resultados Oficiales Eliminatoria de 32 (Solicitado) */}
+        {/* Fila Inferior: Partidos de Octavos de Final */}
         <div className="w-full max-w-5xl space-y-6 pt-8 border-t border-zinc-900">
           <div className="text-center space-y-2">
             <h2 className="text-2xl font-black text-white uppercase tracking-wider flex items-center justify-center gap-2">
-              🏆 Resultados Oficiales
+              🏆 Partidos en Juego
             </h2>
             <p className="text-xs text-zinc-500 font-semibold uppercase tracking-widest">
-              Eliminatoria de 32 - Partidos Anteriores
+              Octavos de Final - Torneo Actual
             </p>
           </div>
 
@@ -174,17 +174,17 @@ export default async function Home() {
               {/* Partido 1 */}
               <div className="bg-zinc-950/40 border border-zinc-900 rounded-xl p-4 flex flex-col justify-between gap-3 hover:border-zinc-800 transition">
                 <div className="flex items-center justify-between text-[10px] text-zinc-500 font-bold">
-                  <span>⚽ ELIMINATORIA DE 32</span>
-                  <span className="text-zinc-400 bg-zinc-900 px-2 py-0.5 rounded">Fin Ayer</span>
+                  <span>⚽ OCTAVOS DE FINAL</span>
+                  <span className="text-zinc-400 bg-zinc-900 px-2 py-0.5 rounded">Fin Hoy</span>
                 </div>
                 <div className="space-y-2">
                   <div className="flex justify-between items-center text-sm">
-                    <span className="font-semibold text-white flex items-center gap-2">🇧🇪 Bélgica</span>
-                    <strong className="text-base font-black text-emerald-400">3</strong>
+                    <span className="font-semibold text-zinc-400 flex items-center gap-2">🇨🇦 Canadá</span>
+                    <strong className="text-base font-black text-zinc-500">0</strong>
                   </div>
                   <div className="flex justify-between items-center text-sm">
-                    <span className="font-semibold text-zinc-400 flex items-center gap-2">🇸🇳 Senegal</span>
-                    <strong className="text-base font-black text-zinc-500">2</strong>
+                    <span className="font-semibold text-white flex items-center gap-2">🇲🇦 Marruecos</span>
+                    <strong className="text-base font-black text-emerald-400">3</strong>
                   </div>
                 </div>
               </div>
@@ -192,17 +192,17 @@ export default async function Home() {
               {/* Partido 2 */}
               <div className="bg-zinc-950/40 border border-zinc-900 rounded-xl p-4 flex flex-col justify-between gap-3 hover:border-zinc-800 transition">
                 <div className="flex items-center justify-between text-[10px] text-zinc-500 font-bold">
-                  <span>⚽ ELIMINATORIA DE 32</span>
-                  <span className="text-zinc-400 bg-zinc-900 px-2 py-0.5 rounded">Fin Mié, 1/7</span>
+                  <span>⚽ OCTAVOS DE FINAL</span>
+                  <span className="text-emerald-400 bg-zinc-900/50 border border-emerald-900/30 px-2 py-0.5 rounded">Hoy, 5:00 p.m.</span>
                 </div>
                 <div className="space-y-2">
                   <div className="flex justify-between items-center text-sm">
-                    <span className="font-semibold text-white flex items-center gap-2">🇺🇸 USA</span>
-                    <strong className="text-base font-black text-emerald-400">2</strong>
+                    <span className="font-semibold text-white flex items-center gap-2">🇵🇾 Paraguay</span>
+                    <strong className="text-base font-black text-zinc-500">-</strong>
                   </div>
                   <div className="flex justify-between items-center text-sm">
-                    <span className="font-semibold text-zinc-400 flex items-center gap-2">🇧🇦 Bosnia</span>
-                    <strong className="text-base font-black text-zinc-500">0</strong>
+                    <span className="font-semibold text-white flex items-center gap-2">🇫🇷 Francia</span>
+                    <strong className="text-base font-black text-zinc-500">-</strong>
                   </div>
                 </div>
               </div>
@@ -210,17 +210,17 @@ export default async function Home() {
               {/* Partido 3 */}
               <div className="bg-zinc-950/40 border border-zinc-900 rounded-xl p-4 flex flex-col justify-between gap-3 hover:border-zinc-800 transition">
                 <div className="flex items-center justify-between text-[10px] text-zinc-500 font-bold">
-                  <span>⚽ ELIMINATORIA DE 32</span>
-                  <span className="text-zinc-400 bg-zinc-900 px-2 py-0.5 rounded">Fin Ayer</span>
+                  <span>⚽ OCTAVOS DE FINAL</span>
+                  <span className="text-zinc-450 bg-zinc-900 px-2 py-0.5 rounded">Mañana, 4:00 p.m.</span>
                 </div>
                 <div className="space-y-2">
                   <div className="flex justify-between items-center text-sm">
-                    <span className="font-semibold text-white flex items-center gap-2">🇪🇸 España</span>
-                    <strong className="text-base font-black text-emerald-400">3</strong>
+                    <span className="font-semibold text-white flex items-center gap-2">🇧🇷 Brasil</span>
+                    <strong className="text-base font-black text-zinc-500">-</strong>
                   </div>
                   <div className="flex justify-between items-center text-sm">
-                    <span className="font-semibold text-zinc-400 flex items-center gap-2">🇦🇹 Austria</span>
-                    <strong className="text-base font-black text-zinc-500">0</strong>
+                    <span className="font-semibold text-white flex items-center gap-2">🇳🇴 Noruega</span>
+                    <strong className="text-base font-black text-zinc-500">-</strong>
                   </div>
                 </div>
               </div>
@@ -228,17 +228,17 @@ export default async function Home() {
               {/* Partido 4 */}
               <div className="bg-zinc-950/40 border border-zinc-900 rounded-xl p-4 flex flex-col justify-between gap-3 hover:border-zinc-800 transition">
                 <div className="flex items-center justify-between text-[10px] text-zinc-500 font-bold">
-                  <span>⚽ ELIMINATORIA DE 32</span>
-                  <span className="text-zinc-400 bg-zinc-900 px-2 py-0.5 rounded">Fin Ayer</span>
+                  <span>⚽ OCTAVOS DE FINAL</span>
+                  <span className="text-zinc-450 bg-zinc-900 px-2 py-0.5 rounded">Mañana, 8:00 p.m.</span>
                 </div>
                 <div className="space-y-2">
                   <div className="flex justify-between items-center text-sm">
-                    <span className="font-semibold text-white flex items-center gap-2">🇨🇭 Suiza</span>
-                    <strong className="text-base font-black text-emerald-400">2</strong>
+                    <span className="font-semibold text-white flex items-center gap-2">🇲🇽 México</span>
+                    <strong className="text-base font-black text-zinc-500">-</strong>
                   </div>
                   <div className="flex justify-between items-center text-sm">
-                    <span className="font-semibold text-zinc-400 flex items-center gap-2">🇩🇿 Argelia</span>
-                    <strong className="text-base font-black text-zinc-500">0</strong>
+                    <span className="font-semibold text-white flex items-center gap-2">🇬🇧 Inglaterra</span>
+                    <strong className="text-base font-black text-zinc-500">-</strong>
                   </div>
                 </div>
               </div>
