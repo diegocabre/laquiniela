@@ -98,14 +98,12 @@ export default async function PhaseMatchesPage({ params }: PageProps) {
           </div>
         </div>
 
-        {isPaid && (
-          <Link
-            href={`/leaderboard/${phase.id}`}
-            className="inline-flex items-center gap-2 bg-zinc-900 hover:bg-zinc-800 text-white font-semibold text-sm px-4 py-2.5 rounded-lg border border-zinc-800 hover:border-zinc-700 transition"
-          >
-            📊 Ver Tabla de Posiciones
-          </Link>
-        )}
+        <Link
+          href={`/leaderboard/${phase.id}`}
+          className="inline-flex items-center gap-2 bg-zinc-900 hover:bg-zinc-800 text-white font-semibold text-sm px-4 py-2.5 rounded-lg border border-zinc-800 hover:border-zinc-700 transition"
+        >
+          📊 Ver Tabla de Posiciones
+        </Link>
       </div>
 
       {matchesError && (
@@ -126,12 +124,18 @@ export default async function PhaseMatchesPage({ params }: PageProps) {
               Debes realizar el pago de inscripción para esta fase para poder ingresar tus pronósticos y competir en el pozo general.
             </p>
           </div>
-          <div className="pt-2">
+          <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
               href={`/competitions/${competitionSlug}`}
-              className="inline-block bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm px-6 py-3 rounded-lg transition"
+              className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm px-6 py-3 rounded-lg transition whitespace-nowrap"
             >
               Completar Inscripción
+            </Link>
+            <Link
+              href={`/leaderboard/${phase.id}`}
+              className="bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white font-semibold text-sm px-6 py-3 rounded-lg border border-zinc-800 transition whitespace-nowrap"
+            >
+              📊 Ver Tabla y Pozo
             </Link>
           </div>
         </div>
