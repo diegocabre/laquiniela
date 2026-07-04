@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { formatCurrency } from '@/lib/utils'
 
 interface CheckoutButtonProps {
   phaseId: string
@@ -69,7 +70,7 @@ export default function CheckoutButton({ phaseId, entryFee, status }: CheckoutBu
           disabled={loading}
           className="w-full text-center bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm py-2 rounded-lg transition disabled:opacity-50 cursor-pointer"
         >
-          {loading ? 'Procesando...' : `Inscribirse (${Number(entryFee).toFixed(2)} USD)`}
+          {loading ? 'Procesando...' : `Inscribirse (${formatCurrency(Number(entryFee))})`}
         </button>
       )}
 
@@ -96,7 +97,7 @@ export default function CheckoutButton({ phaseId, entryFee, status }: CheckoutBu
               <div className="flex justify-between border-b border-zinc-900 pb-2">
                 <span className="text-zinc-500">Monto:</span>
                 <strong className="text-emerald-400 font-bold text-base">
-                  {Number(entryFee).toFixed(2)} USD (o equivalente)
+                  {formatCurrency(Number(entryFee))}
                 </strong>
               </div>
               <div className="flex justify-between border-b border-zinc-900 pb-2">

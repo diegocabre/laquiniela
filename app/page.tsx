@@ -31,24 +31,24 @@ export default async function Home() {
       </div>
 
       {/* Header */}
-      <header className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between border-b border-zinc-900/50 relative z-10">
-        <div className="flex items-center gap-3">
-          <span className="bg-emerald-500 w-3 h-3 rounded-full animate-ping"></span>
-          <span className="text-xl font-black tracking-tight text-white uppercase">La Quiniela</span>
-          <span className="text-xs text-zinc-500 font-bold bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded uppercase">
+      <header className="max-w-7xl mx-auto w-full px-3 sm:px-6 lg:px-8 h-20 flex items-center justify-between border-b border-zinc-900/50 relative z-10">
+        <div className="flex items-center gap-1.5 sm:gap-3">
+          <span className="bg-emerald-500 w-2.5 h-2.5 rounded-full animate-ping"></span>
+          <span className="text-base sm:text-xl font-black tracking-tight text-white uppercase whitespace-nowrap">La Quiniela</span>
+          <span className="hidden sm:inline-flex text-[10px] sm:text-xs text-zinc-500 font-bold bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded uppercase whitespace-nowrap">
             by Soluciones DyS
           </span>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-1 sm:gap-4">
           <Link
             href="/login"
-            className="text-sm font-semibold text-zinc-400 hover:text-white transition px-4 py-2 rounded-lg"
+            className="text-xs sm:text-sm font-semibold text-zinc-400 hover:text-white transition px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-lg whitespace-nowrap"
           >
             Iniciar Sesión
           </Link>
           <Link
             href="/register"
-            className="text-sm font-semibold text-zinc-950 bg-emerald-400 hover:bg-emerald-350 transition px-4 py-2 rounded-lg shadow-[0_0_20px_rgba(52,211,153,0.3)]"
+            className="text-xs sm:text-sm font-semibold text-zinc-950 bg-emerald-400 hover:bg-emerald-350 transition px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg shadow-[0_0_20px_rgba(52,211,153,0.3)] whitespace-nowrap"
           >
             Registrarse
           </Link>

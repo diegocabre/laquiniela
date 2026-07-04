@@ -159,15 +159,15 @@ export default function AdminPhasesTab({ competitions, initialPhases }: AdminPha
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs text-zinc-400 font-semibold uppercase">Costo de Entrada (USD)</label>
+              <label className="text-xs text-zinc-400 font-semibold uppercase">Costo de Entrada (CLP)</label>
               <input
                 type="number"
-                step="0.01"
+                step="1"
                 required
                 value={entryFee}
                 onChange={(e) => setEntryFee(e.target.value)}
                 className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2 text-sm text-white focus:outline-none focus:border-emerald-500"
-                placeholder="10.00"
+                placeholder="10000"
               />
             </div>
 
