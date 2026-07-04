@@ -18,8 +18,9 @@ export default function AdminMatchesTab({ phases, initialMatches }: AdminMatches
   const [startAt, setStartAt] = useState('')
   
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
+  const [createError, setCreateError] = useState<string | null>(null)
+  const [createSuccess, setCreateSuccess] = useState(false)
+  const [listError, setListError] = useState<string | null>(null)
 
   // Marcadores en edición
   const [scores, setScores] = useState<Record<string, { home: string; away: string }>>({})
@@ -43,8 +44,8 @@ export default function AdminMatchesTab({ phases, initialMatches }: AdminMatches
   const handleCreateMatch = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-    setError(null)
-    setSuccess(false)
+    setCreateError(null)
+    setCreateSuccess(false)
 
     try {
       const res = await fetch('/api/admin/matches', {
@@ -62,12 +63,12 @@ export default function AdminMatchesTab({ phases, initialMatches }: AdminMatches
       if (!res.ok) throw new Error(data.error || 'Error al crear partido')
 
       setMatches((prev) => [...prev, data])
-      setSuccess(true)
+      setCreateSuccess(true)
       setHomeTeam('')
       setAwayTeam('')
       setStartAt('')
     } catch (err: any) {
-      setError(err.message)
+      setCreateError(err.message)
     } finally {
       setLoading(false)
     }
@@ -76,12 +77,12 @@ export default function AdminMatchesTab({ phases, initialMatches }: AdminMatches
   const handleUpdateScore = async (matchId: string, finalize = false) => {
     const scoreObj = scores[matchId]
     if (!scoreObj || scoreObj.home === '' || scoreObj.away === '') {
-      setError('Debes ingresar ambos marcadores.')
+      setListError('Debes ingresar ambos marcadores.')
       return
     }
 
     setScoreLoadingId(matchId)
-    setError(null)
+    setListError(null)
 
     try {
       const res = await fetch('/api/admin/matches', {
@@ -100,7 +101,7 @@ export default function AdminMatchesTab({ phases, initialMatches }: AdminMatches
 
       setMatches((prev) => prev.map((m) => (m.id === matchId ? data : m)))
     } catch (err: any) {
-      setError(err.message)
+      setListError(err.message)
     } finally {
       setScoreLoadingId(null)
     }
@@ -123,15 +124,15 @@ export default function AdminMatchesTab({ phases, initialMatches }: AdminMatches
       <div className="lg:col-span-4 bg-zinc-950 border border-zinc-900 rounded-2xl p-6 h-fit space-y-6">
         <h3 className="text-lg font-bold text-white">Crear Partido</h3>
 
-        {success && (
+        {createSuccess && (
           <p className="text-xs text-emerald-400 bg-emerald-950/40 p-3 rounded-lg border border-emerald-900/30">
             ✓ Partido creado con éxito.
           </p>
         )}
 
-        {error && (
+        {createError && (
           <p className="text-xs text-red-400 bg-red-950/40 p-3 rounded-lg border border-red-900/30">
-            {error}
+            {createError}
           </p>
         )}
 
@@ -217,6 +218,12 @@ export default function AdminMatchesTab({ phases, initialMatches }: AdminMatches
             ))}
           </select>
         </div>
+
+        {listError && (
+          <div className="bg-red-950/40 border-b border-zinc-900 p-4 text-xs text-red-400">
+            {listError}
+          </div>
+        )}
 
         {filteredMatches.length === 0 ? (
           <div className="p-12 text-center text-zinc-500 text-sm">
