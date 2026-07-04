@@ -1,7 +1,8 @@
 export function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('es-ES', {
+  return new Intl.NumberFormat('es-CL', {
     style: 'currency',
-    currency: 'EUR', // o USD según se requiera
+    currency: 'CLP',
+    minimumFractionDigits: 0,
   }).format(amount)
 }
 

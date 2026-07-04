@@ -1,7 +1,26 @@
 import Link from 'next/link'
 import Image from 'next/image'
+import { createClient } from '@/lib/supabase/server'
+import { formatCurrency } from '@/lib/utils'
 
-export default function Home() {
+export const revalidate = 0
+
+export default async function Home() {
+  const supabase = await createClient()
+
+  // Calcular el pozo real acumulado de todas las inscripciones pagadas
+  const { data: paidEntries } = await supabase
+    .from('entries')
+    .select('id, phases(entry_fee)')
+    .eq('status', 'paid')
+
+  const totalPool = (paidEntries || []).reduce((sum, entry: any) => {
+    const fee = Number(entry.phases?.entry_fee || 0)
+    return sum + fee
+  }, 0)
+
+  const formattedPool = formatCurrency(totalPool)
+
   return (
     <div className="relative min-h-screen bg-zinc-950 text-zinc-100 flex flex-col justify-between overflow-x-hidden">
       
@@ -82,7 +101,7 @@ export default function Home() {
                   <h3 className="font-extrabold text-white text-lg">Eliminatoria de 32</h3>
                 </div>
                 <span className="text-xs bg-emerald-950 text-emerald-400 px-3 py-1 rounded-full border border-emerald-900 font-bold">
-                  Pozo: $1,450.00
+                  Pozo: {formattedPool}
                 </span>
               </div>
 
