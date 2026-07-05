@@ -67,6 +67,33 @@ export default async function LeaderboardPage({ params }: PageProps) {
         </p>
       </div>
 
+      {/* Ganadores destacados (si la fase está finalizada) */}
+      {phase.status === 'finished' && entriesList.length > 0 && (
+        <div className="rounded-2xl border border-amber-500 bg-amber-500/10 p-6 text-center space-y-4 relative overflow-hidden shadow-[0_0_30px_rgba(245,158,11,0.15)]">
+          <div className="absolute inset-0 bg-gradient-to-r from-amber-500/10 via-yellow-500/5 to-amber-500/10 pointer-events-none"></div>
+          <span className="text-4xl">👑</span>
+          <div className="space-y-1">
+            <h2 className="text-xl font-black text-amber-400 uppercase tracking-widest">
+              🏆 ¡Fase Finalizada! 🏆
+            </h2>
+            <p className="text-sm text-zinc-300">
+              Felicidades al ganador(es) de la fase **{phase.name}**:
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-3 justify-center items-center">
+            {entriesList.filter((e: any) => e.points_total === entriesList[0].points_total).map((winner: any) => (
+              <span key={winner.id} className="text-lg font-black text-white bg-zinc-950/80 px-4 py-2 rounded-xl border border-amber-500/30 flex items-center gap-2">
+                👤 {winner.profiles?.username || 'Usuario'} 
+                <span className="text-amber-400 font-extrabold text-sm">({winner.points_total} pts)</span>
+              </span>
+            ))}
+          </div>
+          <div className="text-xs text-zinc-450">
+            Premio Acumulado: <strong className="text-emerald-400 text-sm font-black">{formatCurrency(prizePool)}</strong>
+          </div>
+        </div>
+      )}
+
       {/* Tarjetas de Estadísticas del Pozo de Premios */}
       <div className="grid gap-6 sm:grid-cols-3">
         <div className="rounded-2xl border border-zinc-900 bg-zinc-950 p-6 space-y-2">
