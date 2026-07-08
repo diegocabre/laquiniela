@@ -85,7 +85,7 @@ export async function POST(request: Request) {
               'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-              from: 'La Quiniela <onboarding@resend.dev>',
+              from: process.env.RESEND_FROM_EMAIL || 'La Quiniela <onboarding@resend.dev>',
               to: process.env.ADMIN_EMAILS || 'diegocabre@gmail.com',
               subject: '⚽ Nueva Inscripción Pendiente de Aprobación',
               html: `

@@ -21,10 +21,10 @@ export default async function Home() {
 
   const formattedPool = formatCurrency(totalPool)
 
-  // 2. Obtener la fase destacada en el hero (si existe) y sus ganadores
+  // 2. Obtener la fase destacada en el hero (si existe)
   const { data: highlightedPhase } = await supabase
     .from('phases')
-    .select('id, name')
+    .select('id, name, status, entry_fee')
     .eq('highlighted_in_hero', true)
     .maybeSingle()
 
@@ -38,18 +38,17 @@ export default async function Home() {
       .eq('status', 'paid')
       .order('points_total', { ascending: false })
 
-    if (entries && entries.length > 0) {
-      const topScore = entries[0].points_total
-      heroWinners = entries.filter((e: any) => e.points_total === topScore)
-      
-      const { data: phaseDetails } = await supabase
-        .from('phases')
-        .select('entry_fee')
-        .eq('id', highlightedPhase.id)
-        .single()
-        
-      const entryFee = Number(phaseDetails?.entry_fee || 0)
-      prizePool = entries.length * entryFee * 0.95
+    const entryFee = Number(highlightedPhase.entry_fee || 0)
+    const paidCount = (entries || []).length
+
+    if (highlightedPhase.status === 'finished') {
+      if (entries && entries.length > 0) {
+        const topScore = entries[0].points_total
+        heroWinners = entries.filter((e: any) => e.points_total === topScore)
+        prizePool = paidCount * entryFee * 0.95
+      }
+    } else {
+      prizePool = paidCount * entryFee
     }
   }
 
@@ -159,7 +158,7 @@ export default async function Home() {
               ✨ Apuestas deportivas por fases al estilo Pool/Prode
             </span>
 
-            {highlightedPhase && heroWinners.length > 0 && (
+            {highlightedPhase && highlightedPhase.status === 'finished' && heroWinners.length > 0 && (
               <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 relative overflow-hidden mb-6 max-w-xl mx-auto lg:mx-0">
                 <div className="absolute inset-0 bg-gradient-to-r from-amber-500/10 via-yellow-500/5 to-amber-500/10 pointer-events-none"></div>
                 <div className="flex items-center gap-3 relative z-10">
@@ -173,6 +172,27 @@ export default async function Home() {
                 </div>
                 <div className="text-right relative z-10 flex flex-col items-center sm:items-end">
                   <span className="text-[10px] text-zinc-400 font-bold uppercase">Premio Acumulado</span>
+                  <strong className="text-emerald-400 text-sm sm:text-base font-black">
+                    {formatCurrency(prizePool)}
+                  </strong>
+                </div>
+              </div>
+            )}
+
+            {highlightedPhase && highlightedPhase.status !== 'finished' && (
+              <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 relative overflow-hidden mb-6 max-w-xl mx-auto lg:mx-0">
+                <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 via-teal-500/5 to-emerald-500/10 pointer-events-none"></div>
+                <div className="flex items-center gap-3 relative z-10">
+                  <span className="text-2xl">🔥</span>
+                  <div className="text-left">
+                    <span className="text-[10px] uppercase font-bold tracking-widest text-emerald-450">Torneo Destacado</span>
+                    <h3 className="font-extrabold text-white text-sm sm:text-base">
+                      {highlightedPhase.name}
+                    </h3>
+                  </div>
+                </div>
+                <div className="text-right relative z-10 flex flex-col items-center sm:items-end">
+                  <span className="text-[10px] text-zinc-400 font-bold uppercase">Pozo Acumulado</span>
                   <strong className="text-emerald-400 text-sm sm:text-base font-black">
                     {formatCurrency(prizePool)}
                   </strong>
