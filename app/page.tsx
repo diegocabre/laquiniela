@@ -1,14 +1,14 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/server'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, formatDate } from '@/lib/utils'
 
 export const revalidate = 0
 
 export default async function Home() {
   const supabase = await createClient()
 
-  // Calcular el pozo real acumulado de todas las inscripciones pagadas
+  // 1. Calcular el pozo total sumando todas las inscripciones pagadas
   const { data: paidEntries } = await supabase
     .from('entries')
     .select('id, phases(entry_fee)')
@@ -21,7 +21,7 @@ export default async function Home() {
 
   const formattedPool = formatCurrency(totalPool)
 
-  // Obtener la fase destacada en el hero (si existe) y sus ganadores
+  // 2. Obtener la fase destacada en el hero (si existe) y sus ganadores
   const { data: highlightedPhase } = await supabase
     .from('phases')
     .select('id, name')
@@ -31,7 +31,6 @@ export default async function Home() {
   let heroWinners: any[] = []
   let prizePool = 0
   if (highlightedPhase) {
-    // Obtener las inscripciones pagadas de esa fase ordenadas por puntos descendente
     const { data: entries } = await supabase
       .from('entries')
       .select('id, points_total, profiles(username)')
@@ -41,10 +40,8 @@ export default async function Home() {
 
     if (entries && entries.length > 0) {
       const topScore = entries[0].points_total
-      // Encontrar todos los que tengan el puntaje máximo (por si hay empates)
       heroWinners = entries.filter((e: any) => e.points_total === topScore)
       
-      // Obtener costo de entrada para calcular pozo de esa fase específica
       const { data: phaseDetails } = await supabase
         .from('phases')
         .select('entry_fee')
@@ -54,6 +51,67 @@ export default async function Home() {
       const entryFee = Number(phaseDetails?.entry_fee || 0)
       prizePool = entries.length * entryFee * 0.95
     }
+  }
+
+  // 3. Obtener todas las fases activas o en registro de competiciones activas
+  const { data: activePhasesData } = await supabase
+    .from('phases')
+    .select('*, competitions(name, logo_url, slug, is_active)')
+    .in('status', ['open_registration', 'active'])
+
+  const filteredActivePhases = (activePhasesData || []).filter(
+    (p: any) => p.competitions?.is_active === true
+  )
+
+  const activePhases = await Promise.all(
+    filteredActivePhases.map(async (phase: any) => {
+      const { count } = await supabase
+        .from('entries')
+        .select('id', { count: 'exact', head: true })
+        .eq('phase_id', phase.id)
+        .eq('status', 'paid')
+
+      const paidCount = count || 0
+      const poolValue = paidCount * Number(phase.entry_fee)
+
+      return {
+        id: phase.id,
+        name: phase.name,
+        status: phase.status,
+        entry_fee: Number(phase.entry_fee),
+        competitionName: phase.competitions?.name || 'Torneo',
+        competitionSlug: phase.competitions?.slug || 'torneo',
+        slug: phase.slug,
+        paidCount,
+        pool: poolValue,
+        formattedPool: formatCurrency(poolValue)
+      }
+    })
+  )
+
+  // 4. Obtener partidos en juego o programados de las fases activas
+  const activePhaseIds = activePhases.map((p) => p.id)
+  let activeMatches: any[] = []
+
+  if (activePhaseIds.length > 0) {
+    const { data: matchesData } = await supabase
+      .from('matches')
+      .select('*, phases(name, competitions(name))')
+      .in('phase_id', activePhaseIds)
+      .order('start_at', { ascending: true })
+      .limit(8)
+
+    activeMatches = (matchesData || []).map((m: any) => ({
+      id: m.id,
+      home_team: m.home_team,
+      away_team: m.away_team,
+      home_score: m.home_score,
+      away_score: m.away_score,
+      status: m.status,
+      start_at: m.start_at,
+      phaseName: m.phases?.name || 'Fase',
+      competitionName: m.phases?.competitions?.name || 'Torneo'
+    }))
   }
 
   return (
@@ -146,159 +204,290 @@ export default async function Home() {
             </div>
           </div>
 
-          {/* Mockup de Visualización (Fase en Juego) */}
+          {/* Mockup de Visualización (Fases Activas o Fallback) */}
           <div className="flex-1 w-full max-w-md relative">
             <div className="absolute inset-0 bg-emerald-500/10 rounded-3xl blur-2xl"></div>
             <div className="relative rounded-3xl border border-zinc-800 bg-zinc-900/20 p-6 sm:p-8 backdrop-blur-xl space-y-6">
               
-              {/* Cabecera del mockup */}
-              <div className="flex items-center justify-between border-b border-zinc-800/80 pb-4">
-                <div>
-                  <span className="text-[10px] uppercase tracking-wider text-emerald-400 font-bold">Fase en Juego</span>
-                  <h3 className="font-extrabold text-white text-lg">Octavos de Final</h3>
-                </div>
-                <span className="text-xs bg-emerald-950 text-emerald-400 px-3 py-1 rounded-full border border-emerald-900 font-bold">
-                  Pozo: {formattedPool}
-                </span>
-              </div>
-
-              {/* Partido de prueba */}
-              <div className="space-y-4">
-                <div className="bg-zinc-950/60 rounded-xl p-4 border border-zinc-900/50 flex flex-col gap-1.5 hover:border-zinc-800 transition">
-                  <div className="flex items-center justify-between text-[10px] text-zinc-500 font-bold">
-                    <span>OCTAVOS DE FINAL</span>
-                    <span className="text-zinc-400">Fin</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-sm">Canadá</span>
-                    <div className="flex items-center gap-2">
-                      <span className="w-8 h-8 flex items-center justify-center font-black bg-zinc-900 text-zinc-500 rounded-lg border border-zinc-800">0</span>
-                      <span className="text-zinc-650 font-bold">:</span>
-                      <span className="w-8 h-8 flex items-center justify-center font-black bg-zinc-900 text-white rounded-lg border border-zinc-800">3</span>
+              {activePhases.length > 0 ? (
+                <>
+                  {/* Cabecera de Fases Activas */}
+                  <div className="flex items-center justify-between border-b border-zinc-800/80 pb-4">
+                    <div>
+                      <span className="text-[10px] uppercase tracking-wider text-emerald-400 font-bold">🏆 En Juego</span>
+                      <h3 className="font-extrabold text-white text-lg">Pozos del Momento</h3>
                     </div>
-                    <span className="font-bold text-sm text-right">Marruecos</span>
                   </div>
-                </div>
-                
-                <div className="bg-zinc-950/60 rounded-xl p-4 border border-zinc-900/50 flex flex-col gap-1.5 opacity-90 hover:border-zinc-800 transition">
-                  <div className="flex items-center justify-between text-[10px] text-zinc-500 font-bold">
-                    <span>OCTAVOS DE FINAL</span>
-                    <span className="text-emerald-400 font-bold animate-pulse">Hoy, 5:00 p.m.</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-sm">Paraguay</span>
-                    <div className="flex items-center gap-2">
-                      <span className="w-8 h-8 flex items-center justify-center font-black bg-zinc-900 text-zinc-500 rounded-lg border border-zinc-850">-</span>
-                      <span className="text-zinc-650 font-bold">:</span>
-                      <span className="w-8 h-8 flex items-center justify-center font-black bg-zinc-900 text-zinc-500 rounded-lg border border-zinc-850">-</span>
-                    </div>
-                    <span className="font-bold text-sm text-right">Francia</span>
-                  </div>
-                </div>
-              </div>
 
-              {/* Sistema de puntos explicativo */}
-              <div className="grid grid-cols-2 gap-4 border-t border-zinc-800/80 pt-4 text-xs">
-                <div className="space-y-1">
-                  <span className="text-zinc-500 font-semibold block">Acierto Simple</span>
-                  <span className="text-white font-bold block text-sm">+1 Punto</span>
-                </div>
-                <div className="space-y-1">
-                  <span className="text-emerald-500 font-semibold block">Marcador Exacto</span>
-                  <span className="text-emerald-400 font-bold block text-sm">+4 Puntos</span>
-                </div>
-              </div>
+                  {/* Listado de Pozos Activos */}
+                  <div className="space-y-4 max-h-[350px] overflow-y-auto pr-1 custom-scrollbar">
+                    {activePhases.map((phase) => (
+                      <div 
+                        key={phase.id} 
+                        className="bg-zinc-950/60 rounded-xl p-4 border border-zinc-900/50 hover:border-zinc-800 transition flex flex-col gap-3 relative group overflow-hidden"
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/0 via-emerald-500/5 to-emerald-500/0 opacity-0 group-hover:opacity-100 transition pointer-events-none"></div>
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <span className="text-[10px] uppercase font-bold text-zinc-500 block truncate max-w-[200px] text-left">
+                              {phase.competitionName}
+                            </span>
+                            <h4 className="font-extrabold text-sm text-white mt-0.5 truncate max-w-[200px] text-left">
+                              {phase.name}
+                            </h4>
+                          </div>
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                            phase.status === 'active' 
+                              ? 'bg-emerald-950/50 border-emerald-900/30 text-emerald-400'
+                              : 'bg-amber-950/50 border-amber-900/30 text-amber-400'
+                          }`}>
+                            {phase.status === 'active' ? 'En Juego' : 'Registro Abierto'}
+                          </span>
+                        </div>
+
+                        <div className="flex items-end justify-between border-t border-zinc-900/50 pt-2.5">
+                          <div className="text-left">
+                            <span className="text-[9px] text-zinc-500 font-bold block uppercase tracking-wider">Pozo Acumulado</span>
+                            <span className="text-xl font-black text-emerald-400 tracking-tight drop-shadow-[0_0_10px_rgba(52,211,153,0.25)]">
+                              {phase.formattedPool}
+                            </span>
+                          </div>
+                          <Link
+                            href={`/competitions/${phase.competitionSlug}/${phase.slug}`}
+                            className="bg-emerald-500 hover:bg-emerald-450 text-zinc-950 font-black text-xs px-3.5 py-2 rounded-lg transition hover:scale-[1.02] cursor-pointer"
+                          >
+                            Pronosticar
+                          </Link>
+                        </div>
+
+                        <div className="flex justify-between items-center text-[10px] text-zinc-500 border-t border-zinc-900/20 pt-1">
+                          <span>👥 {phase.paidCount} Participantes</span>
+                          <span>Inscripción: {formatCurrency(phase.entry_fee)}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Sistema de puntos explicativo */}
+                  <div className="grid grid-cols-2 gap-4 border-t border-zinc-800/80 pt-4 text-xs">
+                    <div className="space-y-1">
+                      <span className="text-zinc-500 font-semibold block text-left">Acierto Simple</span>
+                      <span className="text-white font-bold block text-sm text-left">+1 Punto</span>
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-emerald-500 font-semibold block text-left">Marcador Exacto</span>
+                      <span className="text-emerald-400 font-bold block text-sm text-left">+4 Puntos</span>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Cabecera del mockup */}
+                  <div className="flex items-center justify-between border-b border-zinc-800/80 pb-4">
+                    <div>
+                      <span className="text-[10px] uppercase tracking-wider text-emerald-400 font-bold">Fase en Juego</span>
+                      <h3 className="font-extrabold text-white text-lg">Octavos de Final</h3>
+                    </div>
+                    <span className="text-xs bg-emerald-950 text-emerald-400 px-3 py-1 rounded-full border border-emerald-900 font-bold">
+                      Pozo: {formattedPool}
+                    </span>
+                  </div>
+
+                  {/* Partido de prueba */}
+                  <div className="space-y-4">
+                    <div className="bg-zinc-950/60 rounded-xl p-4 border border-zinc-900/50 flex flex-col gap-1.5 hover:border-zinc-800 transition">
+                      <div className="flex items-center justify-between text-[10px] text-zinc-500 font-bold">
+                        <span>OCTAVOS DE FINAL</span>
+                        <span className="text-zinc-400">Fin</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-sm text-left">Canadá</span>
+                        <div className="flex items-center gap-2">
+                          <span className="w-8 h-8 flex items-center justify-center font-black bg-zinc-900 text-zinc-500 rounded-lg border border-zinc-800">0</span>
+                          <span className="text-zinc-650 font-bold">:</span>
+                          <span className="w-8 h-8 flex items-center justify-center font-black bg-zinc-900 text-white rounded-lg border border-zinc-800">3</span>
+                        </div>
+                        <span className="font-bold text-sm text-right">Marruecos</span>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-zinc-950/60 rounded-xl p-4 border border-zinc-900/50 flex flex-col gap-1.5 opacity-90 hover:border-zinc-800 transition">
+                      <div className="flex items-center justify-between text-[10px] text-zinc-500 font-bold">
+                        <span>OCTAVOS DE FINAL</span>
+                        <span className="text-emerald-400 font-bold animate-pulse">Hoy, 5:00 p.m.</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-sm text-left">Paraguay</span>
+                        <div className="flex items-center gap-2">
+                          <span className="w-8 h-8 flex items-center justify-center font-black bg-zinc-900 text-zinc-500 rounded-lg border border-zinc-850">-</span>
+                          <span className="text-zinc-650 font-bold">:</span>
+                          <span className="w-8 h-8 flex items-center justify-center font-black bg-zinc-900 text-zinc-500 rounded-lg border border-zinc-850">-</span>
+                        </div>
+                        <span className="font-bold text-sm text-right">Francia</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Sistema de puntos explicativo */}
+                  <div className="grid grid-cols-2 gap-4 border-t border-zinc-800/80 pt-4 text-xs">
+                    <div className="space-y-1">
+                      <span className="text-zinc-500 font-semibold block text-left">Acierto Simple</span>
+                      <span className="text-white font-bold block text-sm text-left">+1 Punto</span>
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-emerald-500 font-semibold block text-left">Marcador Exacto</span>
+                      <span className="text-emerald-400 font-bold block text-sm text-left">+4 Puntos</span>
+                    </div>
+                  </div>
+                </>
+              )}
 
             </div>
           </div>
         </div>
 
-        {/* Fila Inferior: Partidos de Octavos de Final */}
+        {/* Fila Inferior: Partidos en Juego */}
         <div className="w-full max-w-5xl space-y-6 pt-8 border-t border-zinc-900">
           <div className="text-center space-y-2">
             <h2 className="text-2xl font-black text-white uppercase tracking-wider flex items-center justify-center gap-2">
               🏆 Partidos en Juego
             </h2>
             <p className="text-xs text-zinc-500 font-semibold uppercase tracking-widest">
-              Octavos de Final - Torneo Actual
+              {activeMatches.length > 0 ? 'Fases Activas en Sincronización' : 'Octavos de Final - Torneo Actual'}
             </p>
           </div>
 
           <div className="grid gap-6 md:grid-cols-12 items-stretch">
-            {/* Lado Izquierdo: Lista de 4 Partidos */}
+            {/* Lado Izquierdo: Lista de Partidos */}
             <div className="md:col-span-8 grid gap-4 sm:grid-cols-2">
               
-              {/* Partido 1 */}
-              <div className="bg-zinc-950/40 border border-zinc-900 rounded-xl p-4 flex flex-col justify-between gap-3 hover:border-zinc-800 transition">
-                <div className="flex items-center justify-between text-[10px] text-zinc-500 font-bold">
-                  <span>⚽ OCTAVOS DE FINAL</span>
-                  <span className="text-zinc-400 bg-zinc-900 px-2 py-0.5 rounded">Fin Hoy</span>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="font-semibold text-zinc-400 flex items-center gap-2">🇨🇦 Canadá</span>
-                    <strong className="text-base font-black text-zinc-500">0</strong>
+              {activeMatches.length > 0 ? (
+                activeMatches.map((match) => {
+                  const isFinished = match.status === 'finished';
+                  const startTime = new Date(match.start_at).getTime();
+                  const isLocked = startTime - 60000 <= Date.now();
+                  
+                  return (
+                    <div 
+                      key={match.id} 
+                      className="bg-zinc-950/40 border border-zinc-900 rounded-xl p-4 flex flex-col justify-between gap-3 hover:border-zinc-800 transition"
+                    >
+                      <div className="flex items-center justify-between text-[10px] text-zinc-500 font-bold uppercase">
+                        <span className="text-left truncate max-w-[180px]">⚽ {match.competitionName} - {match.phaseName}</span>
+                        <span className={`px-2 py-0.5 rounded whitespace-nowrap ${
+                          isFinished 
+                            ? 'bg-zinc-900 text-zinc-400' 
+                            : isLocked 
+                            ? 'bg-orange-950/50 border border-orange-900/30 text-orange-400' 
+                            : 'bg-emerald-950/50 border border-emerald-900/30 text-emerald-400'
+                        }`}>
+                          {isFinished ? 'Fin' : isLocked ? 'En Juego' : formatDate(match.start_at)}
+                        </span>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center text-sm">
+                          <span className={`font-semibold flex items-center gap-2 text-left ${
+                            isFinished && Number(match.home_score) > Number(match.away_score) ? 'text-white font-bold' : 'text-zinc-400'
+                          }`}>
+                            {match.home_team}
+                          </span>
+                          <strong className={`text-base font-black ${
+                            isFinished && Number(match.home_score) > Number(match.away_score) ? 'text-emerald-400' : 'text-zinc-500'
+                          }`}>
+                            {match.home_score !== null ? match.home_score : '-'}
+                          </strong>
+                        </div>
+                        <div className="flex justify-between items-center text-sm">
+                          <span className={`font-semibold flex items-center gap-2 text-left ${
+                            isFinished && Number(match.away_score) > Number(match.home_score) ? 'text-white font-bold' : 'text-zinc-400'
+                          }`}>
+                            {match.away_team}
+                          </span>
+                          <strong className={`text-base font-black ${
+                            isFinished && Number(match.away_score) > Number(match.home_score) ? 'text-emerald-400' : 'text-zinc-500'
+                          }`}>
+                            {match.away_score !== null ? match.away_score : '-'}
+                          </strong>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <>
+                  {/* Partido 1 Fallback */}
+                  <div className="bg-zinc-950/40 border border-zinc-900 rounded-xl p-4 flex flex-col justify-between gap-3 hover:border-zinc-800 transition">
+                    <div className="flex items-center justify-between text-[10px] text-zinc-500 font-bold">
+                      <span>⚽ OCTAVOS DE FINAL</span>
+                      <span className="text-zinc-400 bg-zinc-900 px-2 py-0.5 rounded">Fin Hoy</span>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="font-semibold text-zinc-400 flex items-center gap-2">🇨🇦 Canadá</span>
+                        <strong className="text-base font-black text-zinc-500">0</strong>
+                      </div>
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="font-semibold text-white flex items-center gap-2">🇲🇦 Marruecos</span>
+                        <strong className="text-base font-black text-emerald-400">3</strong>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="font-semibold text-white flex items-center gap-2">🇲🇦 Marruecos</span>
-                    <strong className="text-base font-black text-emerald-400">3</strong>
-                  </div>
-                </div>
-              </div>
 
-              {/* Partido 2 */}
-              <div className="bg-zinc-950/40 border border-zinc-900 rounded-xl p-4 flex flex-col justify-between gap-3 hover:border-zinc-800 transition">
-                <div className="flex items-center justify-between text-[10px] text-zinc-500 font-bold">
-                  <span>⚽ OCTAVOS DE FINAL</span>
-                  <span className="text-emerald-400 bg-zinc-900/50 border border-emerald-900/30 px-2 py-0.5 rounded">Hoy, 5:00 p.m.</span>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="font-semibold text-white flex items-center gap-2">🇵🇾 Paraguay</span>
-                    <strong className="text-base font-black text-zinc-500">-</strong>
+                  {/* Partido 2 Fallback */}
+                  <div className="bg-zinc-950/40 border border-zinc-900 rounded-xl p-4 flex flex-col justify-between gap-3 hover:border-zinc-800 transition">
+                    <div className="flex items-center justify-between text-[10px] text-zinc-500 font-bold">
+                      <span>⚽ OCTAVOS DE FINAL</span>
+                      <span className="text-emerald-400 bg-zinc-900/50 border border-emerald-900/30 px-2 py-0.5 rounded">Hoy, 5:00 p.m.</span>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="font-semibold text-white flex items-center gap-2">🇵🇾 Paraguay</span>
+                        <strong className="text-base font-black text-zinc-500">-</strong>
+                      </div>
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="font-semibold text-white flex items-center gap-2">🇫🇷 Francia</span>
+                        <strong className="text-base font-black text-zinc-500">-</strong>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="font-semibold text-white flex items-center gap-2">🇫🇷 Francia</span>
-                    <strong className="text-base font-black text-zinc-500">-</strong>
-                  </div>
-                </div>
-              </div>
 
-              {/* Partido 3 */}
-              <div className="bg-zinc-950/40 border border-zinc-900 rounded-xl p-4 flex flex-col justify-between gap-3 hover:border-zinc-800 transition">
-                <div className="flex items-center justify-between text-[10px] text-zinc-500 font-bold">
-                  <span>⚽ OCTAVOS DE FINAL</span>
-                  <span className="text-zinc-450 bg-zinc-900 px-2 py-0.5 rounded">Mañana, 4:00 p.m.</span>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="font-semibold text-white flex items-center gap-2">🇧🇷 Brasil</span>
-                    <strong className="text-base font-black text-zinc-500">-</strong>
+                  {/* Partido 3 Fallback */}
+                  <div className="bg-zinc-950/40 border border-zinc-900 rounded-xl p-4 flex flex-col justify-between gap-3 hover:border-zinc-800 transition">
+                    <div className="flex items-center justify-between text-[10px] text-zinc-500 font-bold">
+                      <span>⚽ OCTAVOS DE FINAL</span>
+                      <span className="text-zinc-450 bg-zinc-900 px-2 py-0.5 rounded">Mañana, 4:00 p.m.</span>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="font-semibold text-white flex items-center gap-2">🇧🇷 Brasil</span>
+                        <strong className="text-base font-black text-zinc-500">-</strong>
+                      </div>
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="font-semibold text-white flex items-center gap-2">🇳🇴 Noruega</span>
+                        <strong className="text-base font-black text-zinc-500">-</strong>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="font-semibold text-white flex items-center gap-2">🇳🇴 Noruega</span>
-                    <strong className="text-base font-black text-zinc-500">-</strong>
-                  </div>
-                </div>
-              </div>
 
-              {/* Partido 4 */}
-              <div className="bg-zinc-950/40 border border-zinc-900 rounded-xl p-4 flex flex-col justify-between gap-3 hover:border-zinc-800 transition">
-                <div className="flex items-center justify-between text-[10px] text-zinc-500 font-bold">
-                  <span>⚽ OCTAVOS DE FINAL</span>
-                  <span className="text-zinc-450 bg-zinc-900 px-2 py-0.5 rounded">Mañana, 8:00 p.m.</span>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="font-semibold text-white flex items-center gap-2">🇲🇽 México</span>
-                    <strong className="text-base font-black text-zinc-500">-</strong>
+                  {/* Partido 4 Fallback */}
+                  <div className="bg-zinc-950/40 border border-zinc-900 rounded-xl p-4 flex flex-col justify-between gap-3 hover:border-zinc-800 transition">
+                    <div className="flex items-center justify-between text-[10px] text-zinc-500 font-bold">
+                      <span>⚽ OCTAVOS DE FINAL</span>
+                      <span className="text-zinc-450 bg-zinc-900 px-2 py-0.5 rounded">Mañana, 8:00 p.m.</span>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="font-semibold text-white flex items-center gap-2">🇲🇽 México</span>
+                        <strong className="text-base font-black text-zinc-500">-</strong>
+                      </div>
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="font-semibold text-white flex items-center gap-2">🇬🇧 Inglaterra</span>
+                        <strong className="text-base font-black text-zinc-500">-</strong>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="font-semibold text-white flex items-center gap-2">🇬🇧 Inglaterra</span>
-                    <strong className="text-base font-black text-zinc-500">-</strong>
-                  </div>
-                </div>
-              </div>
+                </>
+              )}
 
             </div>
 
