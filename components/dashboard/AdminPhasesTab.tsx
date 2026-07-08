@@ -20,6 +20,7 @@ export default function AdminPhasesTab({ competitions, initialPhases }: AdminPha
   const [endAt, setEndAt] = useState('')
 
   const [loading, setLoading] = useState(false)
+  const [deleteLoadingId, setDeleteLoadingId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
 
@@ -91,6 +92,67 @@ export default function AdminPhasesTab({ competitions, initialPhases }: AdminPha
 
       setPhases((prev) =>
         prev.map((p) => (p.id === phase.id ? { ...p, status: newStatus } : p))
+      )
+    } catch (err: any) {
+      setError(err.message)
+    }
+  }
+
+  const handleDeletePhase = async (id: string) => {
+    if (!window.confirm('¿Estás seguro de que deseas eliminar esta fase? Se borrarán todos los partidos, inscripciones y pronósticos asociados.')) {
+      return
+    }
+
+    setDeleteLoadingId(id)
+    setError(null)
+
+    try {
+      const res = await fetch('/api/admin/phases', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      })
+
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Error al eliminar fase')
+
+      setPhases((prev) => prev.filter((p) => p.id !== id))
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setDeleteLoadingId(null)
+    }
+  }
+
+  const handleToggleHeroHighlight = async (phase: Phase) => {
+    setError(null)
+    const newHighlightState = !phase.highlighted_in_hero
+
+    try {
+      const res = await fetch('/api/admin/phases', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: phase.id,
+          highlighted_in_hero: newHighlightState,
+        }),
+      })
+
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Error al actualizar destacado')
+
+      // Como la base de datos desmarca todas las demás cuando una es verdadera,
+      // actualizamos el estado local para reflejar esto.
+      setPhases((prev) =>
+        prev.map((p) => {
+          if (p.id === phase.id) {
+            return { ...p, highlighted_in_hero: newHighlightState }
+          }
+          if (newHighlightState === true) {
+            return { ...p, highlighted_in_hero: false }
+          }
+          return p
+        })
       )
     } catch (err: any) {
       setError(err.message)
@@ -244,7 +306,19 @@ export default function AdminPhasesTab({ competitions, initialPhases }: AdminPha
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 flex-wrap md:flex-nowrap justify-end">
+                    <button
+                      onClick={() => handleToggleHeroHighlight(phase)}
+                      title="Destacar ganador de esta fase en el banner principal"
+                      className={`text-xs font-semibold px-2.5 py-1 rounded-lg border transition flex items-center gap-1 cursor-pointer whitespace-nowrap ${
+                        phase.highlighted_in_hero
+                          ? 'bg-amber-500/20 border-amber-500/50 text-amber-400'
+                          : 'bg-zinc-900 border-zinc-800 text-zinc-500 hover:bg-zinc-850 hover:text-zinc-300'
+                      }`}
+                    >
+                      {phase.highlighted_in_hero ? '★ Destacada' : '☆ Destacar Hero'}
+                    </button>
+
                     <select
                       value={phase.status}
                       onChange={(e) => handleUpdateStatus(phase, e.target.value as PhaseStatus)}
@@ -255,6 +329,14 @@ export default function AdminPhasesTab({ competitions, initialPhases }: AdminPha
                       <option value="active">En Juego</option>
                       <option value="finished">Finalizada</option>
                     </select>
+
+                    <button
+                      onClick={() => handleDeletePhase(phase.id)}
+                      disabled={deleteLoadingId === phase.id}
+                      className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-red-950/40 border border-red-900/50 text-red-400 hover:bg-red-900/30 transition cursor-pointer whitespace-nowrap"
+                    >
+                      {deleteLoadingId === phase.id ? 'Borrando...' : 'Eliminar'}
+                    </button>
                   </div>
                 </div>
               )

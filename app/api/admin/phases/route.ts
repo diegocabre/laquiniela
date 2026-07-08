@@ -59,7 +59,7 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: 'No autorizado: Se requiere rol de administrador' }, { status: 403 })
     }
 
-    const { id, name, slug, entry_fee, status, start_at, end_at } = await request.json()
+    const { id, name, slug, entry_fee, status, start_at, end_at, highlighted_in_hero } = await request.json()
 
     if (!id) {
       return NextResponse.json({ error: 'ID es requerido para actualizar' }, { status: 400 })
@@ -72,6 +72,7 @@ export async function PATCH(request: Request) {
     if (status !== undefined) updateFields.status = status
     if (start_at !== undefined) updateFields.start_at = start_at || null
     if (end_at !== undefined) updateFields.end_at = end_at || null
+    if (highlighted_in_hero !== undefined) updateFields.highlighted_in_hero = highlighted_in_hero
 
     const { data, error } = await supabase
       .from('phases')
@@ -85,6 +86,34 @@ export async function PATCH(request: Request) {
     return NextResponse.json(data)
   } catch (error: any) {
     console.error('Error al actualizar fase (Admin):', error)
+    return NextResponse.json({ error: error.message || 'Error de servidor' }, { status: 500 })
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const supabase = await createClient()
+
+    if (!(await isAdminUser(supabase))) {
+      return NextResponse.json({ error: 'No autorizado: Se requiere rol de administrador' }, { status: 403 })
+    }
+
+    const { id } = await request.json()
+
+    if (!id) {
+      return NextResponse.json({ error: 'ID es requerido para eliminar' }, { status: 400 })
+    }
+
+    const { error } = await supabase
+      .from('phases')
+      .delete()
+      .eq('id', id)
+
+    if (error) throw error
+
+    return NextResponse.json({ success: true })
+  } catch (error: any) {
+    console.error('Error al eliminar fase (Admin):', error)
     return NextResponse.json({ error: error.message || 'Error de servidor' }, { status: 500 })
   }
 }

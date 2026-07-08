@@ -21,6 +21,41 @@ export default async function Home() {
 
   const formattedPool = formatCurrency(totalPool)
 
+  // Obtener la fase destacada en el hero (si existe) y sus ganadores
+  const { data: highlightedPhase } = await supabase
+    .from('phases')
+    .select('id, name')
+    .eq('highlighted_in_hero', true)
+    .maybeSingle()
+
+  let heroWinners: any[] = []
+  let prizePool = 0
+  if (highlightedPhase) {
+    // Obtener las inscripciones pagadas de esa fase ordenadas por puntos descendente
+    const { data: entries } = await supabase
+      .from('entries')
+      .select('id, points_total, profiles(username)')
+      .eq('phase_id', highlightedPhase.id)
+      .eq('status', 'paid')
+      .order('points_total', { ascending: false })
+
+    if (entries && entries.length > 0) {
+      const topScore = entries[0].points_total
+      // Encontrar todos los que tengan el puntaje máximo (por si hay empates)
+      heroWinners = entries.filter((e: any) => e.points_total === topScore)
+      
+      // Obtener costo de entrada para calcular pozo de esa fase específica
+      const { data: phaseDetails } = await supabase
+        .from('phases')
+        .select('entry_fee')
+        .eq('id', highlightedPhase.id)
+        .single()
+        
+      const entryFee = Number(phaseDetails?.entry_fee || 0)
+      prizePool = entries.length * entryFee * 0.95
+    }
+  }
+
   return (
     <div className="relative min-h-screen bg-zinc-950 text-zinc-100 flex flex-col justify-between overflow-x-hidden">
       
@@ -65,6 +100,28 @@ export default async function Home() {
             <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-950/50 border border-emerald-900/30 text-emerald-400">
               ✨ Apuestas deportivas por fases al estilo Pool/Prode
             </span>
+
+            {highlightedPhase && heroWinners.length > 0 && (
+              <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 relative overflow-hidden mb-6 max-w-xl mx-auto lg:mx-0">
+                <div className="absolute inset-0 bg-gradient-to-r from-amber-500/10 via-yellow-500/5 to-amber-500/10 pointer-events-none"></div>
+                <div className="flex items-center gap-3 relative z-10">
+                  <span className="text-2xl">🏆</span>
+                  <div className="text-left">
+                    <span className="text-[10px] uppercase font-bold tracking-widest text-amber-500">Ganador destacado de {highlightedPhase.name}</span>
+                    <h3 className="font-extrabold text-white text-sm sm:text-base">
+                      {heroWinners.map((w: any) => w.profiles?.username || 'Usuario').join(', ')}
+                    </h3>
+                  </div>
+                </div>
+                <div className="text-right relative z-10 flex flex-col items-center sm:items-end">
+                  <span className="text-[10px] text-zinc-400 font-bold uppercase">Premio Acumulado</span>
+                  <strong className="text-emerald-400 text-sm sm:text-base font-black">
+                    {formatCurrency(prizePool)}
+                  </strong>
+                </div>
+              </div>
+            )}
+
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black leading-tight tracking-tight text-white">
               Demuestra tu instinto.<br />
               Conquista el <span className="bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">Pozo Total</span>.

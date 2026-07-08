@@ -17,6 +17,7 @@ export default function AdminCompetitionsTab({ initialCompetitions }: AdminCompe
   
   const [loading, setLoading] = useState(false)
   const [toggleLoadingId, setToggleLoadingId] = useState<string | null>(null)
+  const [deleteLoadingId, setDeleteLoadingId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
 
@@ -94,6 +95,32 @@ export default function AdminCompetitionsTab({ initialCompetitions }: AdminCompe
       setError(err.message)
     } finally {
       setToggleLoadingId(null)
+    }
+  }
+
+  const handleDeleteCompetition = async (id: string) => {
+    if (!window.confirm('¿Estás seguro de que deseas eliminar esta competición? Se borrarán todas las fases, partidos, inscripciones y pronósticos asociados.')) {
+      return
+    }
+
+    setDeleteLoadingId(id)
+    setError(null)
+
+    try {
+      const res = await fetch('/api/admin/competitions', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id }),
+      })
+
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Error al eliminar competición')
+
+      setCompetitions((prev) => prev.filter((c) => c.id !== id))
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setDeleteLoadingId(null)
     }
   }
 
@@ -203,10 +230,10 @@ export default function AdminCompetitionsTab({ initialCompetitions }: AdminCompe
                   )}
                 </div>
 
-                <div>
+                <div className="flex items-center gap-2">
                   <button
                     onClick={() => handleToggleActive(comp)}
-                    disabled={toggleLoadingId === comp.id}
+                    disabled={toggleLoadingId === comp.id || deleteLoadingId === comp.id}
                     className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition cursor-pointer ${
                       comp.is_active
                         ? 'bg-emerald-950/40 border-emerald-900/50 text-emerald-400 hover:bg-emerald-900/30'
@@ -218,6 +245,13 @@ export default function AdminCompetitionsTab({ initialCompetitions }: AdminCompe
                       : comp.is_active
                       ? 'Desactivar'
                       : 'Activar'}
+                  </button>
+                  <button
+                    onClick={() => handleDeleteCompetition(comp.id)}
+                    disabled={deleteLoadingId === comp.id || toggleLoadingId === comp.id}
+                    className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-red-950/40 border border-red-900/50 text-red-400 hover:bg-red-900/30 transition cursor-pointer"
+                  >
+                    {deleteLoadingId === comp.id ? 'Eliminando...' : 'Eliminar'}
                   </button>
                 </div>
               </div>

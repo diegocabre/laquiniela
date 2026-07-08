@@ -22,6 +22,18 @@ export default function AdminMatchesTab({ phases, initialMatches }: AdminMatches
   const [createSuccess, setCreateSuccess] = useState(false)
   const [listError, setListError] = useState<string | null>(null)
 
+  // Pronósticos
+  const [predictionsMap, setPredictionsMap] = useState<Record<string, any[]>>({})
+  const [loadingPredictionsId, setLoadingPredictionsId] = useState<string | null>(null)
+  const [showPredictionsId, setShowPredictionsId] = useState<string | null>(null)
+  const [now, setNow] = useState(Date.now())
+
+  // Actualizar el tiempo cada 15 segundos para bloquear/desbloquear
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 15000)
+    return () => clearInterval(timer)
+  }, [])
+
   // Marcadores en edición
   const [scores, setScores] = useState<Record<string, { home: string; away: string }>>({})
   const [scoreLoadingId, setScoreLoadingId] = useState<string | null>(null)
@@ -116,6 +128,37 @@ export default function AdminMatchesTab({ phases, initialMatches }: AdminMatches
         [team]: cleanVal,
       },
     }))
+  }
+
+  const handleLoadPredictions = async (matchId: string) => {
+    if (showPredictionsId === matchId) {
+      setShowPredictionsId(null)
+      return
+    }
+
+    setShowPredictionsId(matchId)
+
+    if (predictionsMap[matchId]) return
+
+    setLoadingPredictionsId(matchId)
+    setListError(null)
+
+    try {
+      const res = await fetch(`/api/admin/predictions?matchId=${matchId}`)
+      const data = await res.json()
+
+      if (!res.ok) throw new Error(data.error || 'Error al obtener pronósticos')
+
+      setPredictionsMap((prev) => ({
+        ...prev,
+        [matchId]: data,
+      }))
+    } catch (err: any) {
+      setListError(err.message)
+      setShowPredictionsId(null)
+    } finally {
+      setLoadingPredictionsId(null)
+    }
   }
 
   return (
@@ -294,6 +337,62 @@ export default function AdminMatchesTab({ phases, initialMatches }: AdminMatches
                       </div>
                     )}
                   </div>
+
+                  {/* Visualización de Pronósticos de Usuarios (Solo si el partido comenzó o terminó) */}
+                  {(new Date(match.start_at).getTime() <= now || isFinished) && (
+                    <div className="border-t border-zinc-900 pt-3 mt-3">
+                      <button
+                        type="button"
+                        onClick={() => handleLoadPredictions(match.id)}
+                        className="text-xs font-bold text-emerald-400 hover:text-emerald-350 flex items-center gap-1.5 transition cursor-pointer"
+                      >
+                        {showPredictionsId === match.id ? '✕ Ocultar Pronósticos' : '📋 Ver Pronósticos de Participantes'}
+                      </button>
+
+                      {showPredictionsId === match.id && (
+                        <div className="mt-3 bg-zinc-950/60 border border-zinc-900 rounded-xl p-4 space-y-3">
+                          <h5 className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Pronósticos de los Jugadores</h5>
+                          
+                          {loadingPredictionsId === match.id ? (
+                            <p className="text-xs text-zinc-500">Cargando pronósticos...</p>
+                          ) : !predictionsMap[match.id] || predictionsMap[match.id].length === 0 ? (
+                            <p className="text-xs text-zinc-500">No hay pronósticos registrados para este partido.</p>
+                          ) : (
+                            <div className="overflow-x-auto">
+                              <table className="w-full text-left border-collapse text-xs">
+                                <thead>
+                                  <tr className="border-b border-zinc-900 text-zinc-500 font-semibold">
+                                    <th className="py-2 px-1">Usuario</th>
+                                    <th className="py-2 px-1 text-center">Predicción</th>
+                                    <th className="py-2 px-1 text-right">Puntos Ganados</th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-zinc-900/30">
+                                  {predictionsMap[match.id].map((p, idx) => (
+                                    <tr key={idx} className="text-zinc-300">
+                                      <td className="py-2 px-1 font-semibold">{p.username}</td>
+                                      <td className="py-2 px-1 text-center font-bold">
+                                        {p.home_prediction} - {p.away_prediction}
+                                      </td>
+                                      <td className="py-2 px-1 text-right">
+                                        {p.points_earned !== null ? (
+                                          <span className={`font-bold ${p.points_earned > 0 ? 'text-emerald-400' : 'text-zinc-500'}`}>
+                                            +{p.points_earned} pts
+                                          </span>
+                                        ) : (
+                                          <span className="text-zinc-650">-</span>
+                                        )}
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )
             })}

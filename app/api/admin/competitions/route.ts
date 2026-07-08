@@ -85,3 +85,31 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: error.message || 'Error de servidor' }, { status: 500 })
   }
 }
+
+export async function DELETE(request: Request) {
+  try {
+    const supabase = await createClient()
+
+    if (!(await isAdminUser(supabase))) {
+      return NextResponse.json({ error: 'No autorizado: Se requiere rol de administrador' }, { status: 403 })
+    }
+
+    const { id } = await request.json()
+
+    if (!id) {
+      return NextResponse.json({ error: 'ID es requerido para eliminar' }, { status: 400 })
+    }
+
+    const { error } = await supabase
+      .from('competitions')
+      .delete()
+      .eq('id', id)
+
+    if (error) throw error
+
+    return NextResponse.json({ success: true })
+  } catch (error: any) {
+    console.error('Error al eliminar competición (Admin):', error)
+    return NextResponse.json({ error: error.message || 'Error de servidor' }, { status: 500 })
+  }
+}

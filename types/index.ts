@@ -27,6 +27,7 @@ export interface Phase {
   status: PhaseStatus
   start_at: string | null
   end_at: string | null
+  highlighted_in_hero?: boolean
   created_at: string
 }
 
