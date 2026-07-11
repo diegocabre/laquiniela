@@ -173,56 +173,71 @@ export default function PredictionForm({ matches, initialPredictions, userId }: 
             </div>
 
             {/* Marcadores y Inputs de Predicción */}
-            <div className="grid grid-cols-1 md:grid-cols-12 items-center gap-6">
+            <div className="flex flex-row items-center justify-between gap-2 md:gap-6 w-full">
               {/* Equipo Local */}
-              <div className="md:col-span-4 flex items-center gap-4 justify-end">
-                <span className="text-lg font-bold text-white text-right">{match.home_team}</span>
-                {isFinished && (
-                  <span className="text-2xl font-black text-zinc-400 bg-zinc-900 w-10 h-10 flex items-center justify-center rounded-lg border border-zinc-800">
-                    {match.home_score}
-                  </span>
-                )}
+              <div className="flex-1 flex items-center gap-2 md:gap-4 justify-end min-w-0">
+                <span className="text-sm md:text-lg font-bold text-white text-right truncate">{match.home_team}</span>
               </div>
 
-              {/* Contenedor de Predicción (Inputs) */}
-              <div className="md:col-span-4 flex items-center justify-center gap-3">
-                <div className="flex flex-col items-center">
-                  <input
-                    type="text"
-                    maxLength={2}
-                    disabled={isLocked || isFinished}
-                    value={homePredVal}
-                    onChange={(e) => handleInputChange(match.id, 'home', e.target.value)}
-                    className="w-14 h-14 text-center text-2xl font-black rounded-xl border border-zinc-800 bg-zinc-900 text-white focus:outline-none focus:border-emerald-500 disabled:opacity-50 disabled:bg-zinc-950/30 disabled:border-zinc-900"
-                    placeholder="-"
-                  />
-                  <span className="text-[10px] text-zinc-600 mt-1 uppercase tracking-wider font-semibold">Local</span>
-                </div>
+              {/* Contenedor Central: Marcador Real o Inputs */}
+              <div className="flex flex-col items-center justify-center gap-1 shrink-0 px-1 md:px-2 min-w-[110px] md:min-w-[180px]">
+                {isFinished ? (
+                  // Si está finalizado, mostrar marcador real grande y predicción del usuario abajo
+                  <div className="flex flex-col items-center gap-1">
+                    {/* Marcador Real */}
+                    <div className="flex items-center gap-1.5 md:gap-2">
+                      <span className="text-base md:text-2xl font-black text-white bg-zinc-900 border border-zinc-800 rounded-lg w-8 h-8 md:w-11 md:h-11 flex items-center justify-center">
+                        {match.home_score}
+                      </span>
+                      <span className="text-zinc-650 font-bold text-sm md:text-lg select-none">:</span>
+                      <span className="text-base md:text-2xl font-black text-white bg-zinc-900 border border-zinc-800 rounded-lg w-8 h-8 md:w-11 md:h-11 flex items-center justify-center">
+                        {match.away_score}
+                      </span>
+                    </div>
+                    {/* Pronóstico del Usuario */}
+                    <span className="text-[9px] md:text-xs font-bold text-zinc-450 bg-zinc-900/50 border border-zinc-850 px-2 py-0.5 md:px-2.5 md:py-1 rounded-md mt-1 whitespace-nowrap">
+                      Tu pronóstico: <strong className="text-emerald-450 font-black">{homePredVal || '-'} - {awayPredVal || '-'}</strong>
+                    </span>
+                  </div>
+                ) : (
+                  // Si no está finalizado, mostrar inputs para pronosticar
+                  <div className="flex flex-col items-center">
+                    <div className="flex items-center gap-1.5 md:gap-3">
+                      <div className="flex flex-col items-center">
+                        <input
+                          type="text"
+                          maxLength={2}
+                          disabled={isLocked}
+                          value={homePredVal}
+                          onChange={(e) => handleInputChange(match.id, 'home', e.target.value)}
+                          className="w-10 h-10 md:w-14 md:h-14 text-center text-lg md:text-2xl font-black rounded-xl border border-zinc-800 bg-zinc-900 text-white focus:outline-none focus:border-emerald-500 disabled:opacity-50 disabled:bg-zinc-950/30 disabled:border-zinc-900"
+                          placeholder="-"
+                        />
+                        <span className="text-[9px] md:text-[10px] text-zinc-600 mt-1 uppercase tracking-wider font-semibold">Local</span>
+                      </div>
 
-                <span className="text-zinc-600 font-bold text-lg select-none">:</span>
+                      <span className="text-zinc-650 font-bold text-base md:text-lg select-none">:</span>
 
-                <div className="flex flex-col items-center">
-                  <input
-                    type="text"
-                    maxLength={2}
-                    disabled={isLocked || isFinished}
-                    value={awayPredVal}
-                    onChange={(e) => handleInputChange(match.id, 'away', e.target.value)}
-                    className="w-14 h-14 text-center text-2xl font-black rounded-xl border border-zinc-800 bg-zinc-900 text-white focus:outline-none focus:border-emerald-500 disabled:opacity-50 disabled:bg-zinc-950/30 disabled:border-zinc-900"
-                    placeholder="-"
-                  />
-                  <span className="text-[10px] text-zinc-600 mt-1 uppercase tracking-wider font-semibold">Visita</span>
-                </div>
+                      <div className="flex flex-col items-center">
+                        <input
+                          type="text"
+                          maxLength={2}
+                          disabled={isLocked}
+                          value={awayPredVal}
+                          onChange={(e) => handleInputChange(match.id, 'away', e.target.value)}
+                          className="w-10 h-10 md:w-14 md:h-14 text-center text-lg md:text-2xl font-black rounded-xl border border-zinc-800 bg-zinc-900 text-white focus:outline-none focus:border-emerald-500 disabled:opacity-50 disabled:bg-zinc-950/30 disabled:border-zinc-900"
+                          placeholder="-"
+                        />
+                        <span className="text-[9px] md:text-[10px] text-zinc-600 mt-1 uppercase tracking-wider font-semibold">Visita</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Equipo Visitante */}
-              <div className="md:col-span-4 flex items-center gap-4 justify-start">
-                {isFinished && (
-                  <span className="text-2xl font-black text-zinc-400 bg-zinc-900 w-10 h-10 flex items-center justify-center rounded-lg border border-zinc-800">
-                    {match.away_score}
-                  </span>
-                )}
-                <span className="text-lg font-bold text-white text-left">{match.away_team}</span>
+              <div className="flex-1 flex items-center gap-2 md:gap-4 justify-start min-w-0">
+                <span className="text-sm md:text-lg font-bold text-white text-left truncate">{match.away_team}</span>
               </div>
             </div>
 
